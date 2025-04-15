@@ -5,9 +5,9 @@ codeuri = "C:\\Users\\NnyabeChamamme\\Desktop\\deadline_notifier\\HelloWorldFunc
 runtime = "java21"
 architecture = "x86_64"
 handler = "helloworld.App::handleRequest"
-source_hash = "55cdfad079d230e268561aeb9deca6dfe6f72560e94a660c7f091cc2aad225b5"
+source_hash = "0214f26687c786fcfa873c35880a8895042508a05a3ebf33d726e9a89ab2b8ab"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["HelloWorldFunction"]
+functions = ["CreateDeadlineEventLambda", "HelloWorldFunction"]
 
 [layer_build_definitions]

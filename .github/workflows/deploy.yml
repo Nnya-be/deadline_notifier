@@ -31,7 +31,7 @@ jobs:
         run: |
           cd HelloWorldFunction
           mvn clean package
-          sam build --use-container
+          sam build 
 
       - name: Debug - Check Files
         run: |
