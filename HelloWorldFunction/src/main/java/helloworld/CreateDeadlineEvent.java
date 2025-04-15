@@ -126,4 +126,5 @@ public class CreateDeadlineEvent implements RequestHandler<DynamodbEvent, Void> 
             logger.error("Failed to create schedule for taskId: {}: {}", taskId, e.getMessage());
         }
     }
+
 }
