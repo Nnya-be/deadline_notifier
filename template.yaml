@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  deadline_notifier
+
+  Sample SAM Template for deadline_notifier
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  TasksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TasksTable
+      AttributeDefinitions:
+        - AttributeName: taskId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: taskId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: false
+      Tags:
+        - Key: Environment
+          Value: Production
+
+  CreateDeadlineEventLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: HelloWorldFunction
+      Handler: helloworld.CreateDeadlineEvent::handleRequest
+      Runtime: java21
+      MemorySize: 512
+      Timeout: 30
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TasksTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:DescribeStream
+                - dynamodb:GetRecords
+                - dynamodb:GetShardIterator
+                - dynamodb:ListStreams
+              Resource: !GetAtt TasksTable.StreamArn
+            - Effect: Allow
+              Action:
+                - scheduler:CreateSchedule
+                - iam:PassRole
+              Resource:
+                - "*"
+      Environment:
+        Variables:
+          TARGET_LAMBDA_ARN: "arn:aws:lambda:us-east-1:123456789012:function:ReminderProcessorLambda"
+          SCHEDULER_ROLE_ARN: "arn:aws:iam::123456789012:role/EventBridgeSchedulerRole"
+      Events:
+        DynamoStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt TasksTable.StreamArn
+            StartingPosition: LATEST
+            BatchSize: 10
+            Enabled: true
+
+  EventBridgeSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - scheduler.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - "arn:aws:lambda:us-east-1:123456789012:function:ReminderProcessorLambda"
+
+
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: HelloWorldFunction
+      Handler: helloworld.App::handleRequest
+      Runtime: java21
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: get
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+  TasksTableArn:
+    Description: ARN of the TasksTable
+    Value: !GetAtt TasksTable.Arn
+  TasksTableStreamArn:
+    Description: ARN of the TasksTable Stream
+    Value: !GetAtt TasksTable.StreamArn
+  CreateDeadlineEventLambdaArn:
+    Description: ARN of the CreateDeadlineEvent Lambda
+    Value: !GetAtt CreateDeadlineEventLambda.Arn

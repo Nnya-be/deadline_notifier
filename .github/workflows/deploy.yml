@@ -1,0 +1,47 @@
+name: Deploy SAM Template
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Install AWS SAM CLI and Build Project
+        run: |
+          pip install aws-sam-cli
+
+      - name: Build SAM Application
+        run: |
+          mvn clean package
+          sam build --use-container
+
+      - name: Debug - Check Files
+        run: |
+          pwd
+          ls -la
+
+      - name: Deploy DynamoDB Stack
+        run: |
+          sam deploy --template-file template.yml \
+              --stack-name dynamodb-stack \
+              --capabilities CAPABILITY_IAM \
+              --resolve-s3 \
+              --no-confirm-changeset \
+              --no-fail-on-empty-changeset
