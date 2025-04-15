@@ -41,7 +41,7 @@ jobs:
 
       - name: Deploy DynamoDB Stack
         run: |
-          sam deploy --template-file template.yml \
+          sam deploy --template-file template.yaml \
               --stack-name dynamodb-stack \
               --capabilities CAPABILITY_IAM \
               --resolve-s3 \
