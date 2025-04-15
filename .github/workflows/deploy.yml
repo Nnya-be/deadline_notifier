@@ -36,7 +36,6 @@ jobs:
 
       - name: Build SAM Application
         run: |
-          cd HelloWorldFunction
           mvn clean package
           sam build --use-container
          
