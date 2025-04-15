@@ -39,6 +39,7 @@ jobs:
           cd HelloWorldFunction
           mvn clean package
           sam build 
+          cd ..
 
       - name: Debug - Check Files
         run: |
