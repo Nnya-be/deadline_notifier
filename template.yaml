@@ -38,7 +38,7 @@ Resources:
   CreateDeadlineEventLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: HelloWorldFunction
+      CodeUri: ./
       Handler: helloworld.CreateDeadlineEvent::handleRequest
       Runtime: java21
       MemorySize: 512
