@@ -40,7 +40,7 @@ Resources:
     Properties:
       CodeUri: ./
       Handler: helloworld.CreateDeadlineEvent::handleRequest
-      Runtime: java21
+      Runtime: java17
       MemorySize: 512
       Timeout: 30
       Policies:
@@ -102,7 +102,7 @@ Resources:
     Properties:
       CodeUri: HelloWorldFunction
       Handler: helloworld.App::handleRequest
-      Runtime: java21
+      Runtime: java17
       Architectures:
       - x86_64
       MemorySize: 512
